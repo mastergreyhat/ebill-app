@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f3b5e">
+  <meta name="description" content="Electricity Bill Calculator">
+  <title>Electricity Bill Calculator</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-icon.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+    .app { max-width: 500px; width: 100%; }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    header h1 {
+      font-size: 1.4rem;
+      color: #0f3b5e;
+      margin-bottom: 4px;
+    }
+    header p {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      color: #334155;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .form-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .form-row > div { flex: 1; min-width: 120px; }
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #0f3b5e;
+    }
+    .btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary {
+      background: #0f3b5e;
+      color: #fff;
+      width: 100%;
+      padding: 14px;
+      font-size: 1.05rem;
+    }
+    .btn-primary:active { background: #0a2843; }
+    .btn-outline {
+      background: #fff;
+      color: #0f3b5e;
+      border: 2px solid #0f3b5e;
+      width: 100%;
+      padding: 12px;
+    }
+    .btn-outline:active { background: #eff6ff; }
+    .result-month {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .result-month:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .result-month h3 {
+      font-size: 0.95rem;
+      color: #0f3b5e;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 6px 8px;
+      text-align: right;
+    }
+    th {
+      color: #64748b;
+      font-weight: 500;
+      font-size: 0.78rem;
+    }
+    td:first-child, th:first-child { text-align: left; }
+    .total-row {
+      font-weight: 700;
+      border-top: 2px solid #334155;
+    }
+    .total-row td { padding-top: 8px; }
+    .tcum-badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .grand-total {
+      text-align: right;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0f3b5e;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 2px solid #334155;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #334155;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; }
+    #results { display: none; }
+    .add-month-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .add-month-row select { flex: 1; }
+    .add-month-row input { flex: 1; }
+    .remove-btn {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .remove-btn:active { background: #dc2626; }
+    .add-btn {
+      background: none;
+      border: 2px dashed #cbd5e1;
+      color: #64748b;
+      padding: 10px;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .add-btn:active { background: #f8fafc; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Electricity Bill Calculator</h1>
+      <p>Works offline &bull; Installable</p>
+    </header>
+
+    <div class="card">
+      <h2>Meter Readings</h2>
+      <form id="readingForm">
+        <div id="readingsContainer"></div>
+        <button type="button" class="add-btn" onclick="addReadingRow()">+ Add Month Reading</button>
+        <button type="submit" class="btn btn-primary">Calculate</button>
+      </form>
+    </div>
+
+    <div class="card" id="results">
+      <div id="resultContent"></div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-outline" onclick="recalculate()" style="flex:1">Recalculate</button>
+        <button class="btn btn-outline" onclick="printPDF()" style="flex:1">Print / PDF</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const MONTHS = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December'
+    ];
+
+    let lastResults = null;
+    let rowCounter = 0;
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function createReadingRow(monthIndex = null, value = '') {
+      rowCounter++;
+      const id = rowCounter;
+      const div = document.createElement('div');
+      div.className = 'add-month-row';
+      div.id = 'row-' + id;
+
+      let options = '';
+      for (let i = 0; i < MONTHS.length; i++) {
+        const selected = (monthIndex === i) ? ' selected' : '';
+        options += `<option value="${i}"${selected}>${MONTHS[i]}</option>`;
+      }
+
+      div.innerHTML = `
+        <select required>
+          <option value="" disabled${monthIndex === null ? ' selected' : ''}>Select month</option>
+          ${options}
+        </select>
+        <input type="number" inputmode="numeric" placeholder="Reading" value="${value}" required>
+        ${rowCounter > 3 ? '<button type="button" class="remove-btn" onclick="removeRow(' + id + ')">&times;</button>' : ''}
+      `;
+      return { div, id };
+    }
+
+    function addReadingRow(monthIndex = null, value = '') {
+      const container = document.getElementById('readingsContainer');
+      const { div, id } = createReadingRow(monthIndex, value);
+      container.appendChild(div);
+      updateRemoveButtons();
+    }
+
+    function removeRow(id) {
+      const row = document.getElementById('row-' + id);
+      if (row) {
+        row.remove();
+        updateRemoveButtons();
+      }
+    }
+
+    function updateRemoveButtons() {
+      const rows = document.querySelectorAll('#readingsContainer .add-month-row');
+      if (rows.length <= 3) {
+        rows.forEach(r => {
+          const btn = r.querySelector('.remove-btn');
+          if (btn) btn.remove();
+        });
+      } else {
+        rows.forEach(r => {
+          if (!r.querySelector('.remove-btn')) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'remove-btn';
+            btn.textContent = '×';
+            btn.onclick = function() { removeRow(parseInt(r.id.replace('row-', ''))); };
+            r.appendChild(btn);
+          }
+        });
+      }
+    }
+
+    function splitIntoThree(total) {
+      const a = Math.floor(Math.random() * total * 0.6) + Math.floor(total * 0.1);
+      const b = Math.floor(Math.random() * (total - a) * 0.7) + Math.floor((total - a) * 0.1);
+      const c = total - a - b;
+      const parts = [a, b, c];
+      for (let i = parts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [parts[i], parts[j]] = [parts[j], parts[i]];
+      }
+      return parts;
+    }
+
+    function formatCurrency(n) {
+      return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderResults(m1Label, m2Label, tcum, t1, t2, t3) {
+      const amt1 = t1 * 8;
+      const amt2 = t2 * 9.6;
+      const amt3 = t3 * 7.2;
+      const total = amt1 + amt2 + amt3;
+      return {
+        html: `
+          <div class="result-month">
+            <h3>${m1Label} &rarr; ${m2Label} &nbsp;<span class="tcum-badge">Tcum = ${tcum} kWh</span></h3>
+            <br>
+            <table>
+              <thead><tr><th></th><th>kWh</th><th>Rate</th><th>Amount</th></tr></thead>
+              <tbody>
+                <tr><td>T1</td><td>${t1}</td><td>8.0/-</td><td>${formatCurrency(amt1)}/-</td></tr>
+                <tr><td>T2</td><td>${t2}</td><td>9.6/-</td><td>${formatCurrency(amt2)}/-</td></tr>
+                <tr><td>T3</td><td>${t3}</td><td>7.2/-</td><td>${formatCurrency(amt3)}/-</td></tr>
+                <tr class="total-row"><td>Total</td><td></td><td></td><td>= Rs ${formatCurrency(total)}/-</td></tr>
+              </tbody>
+            </table>
+          </div>`,
+        total, amt1, amt2, amt3
+      };
+    }
+
+    document.getElementById('readingForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const rows = document.querySelectorAll('#readingsContainer .add-month-row');
+      const readings = [];
+
+      for (const row of rows) {
+        const select = row.querySelector('select');
+        const input = row.querySelector('input');
+        const monthIdx = parseInt(select.value);
+        const reading = parseInt(input.value);
+
+        if (isNaN(monthIdx) || isNaN(reading)) {
+          showToast('Please fill all months and readings');
+          return;
+        }
+        readings.push({ monthIndex: monthIdx, monthName: MONTHS[monthIdx], reading });
+      }
+
+      // Sort by month index so periods are chronological
+      readings.sort((a, b) => a.monthIndex - b.monthIndex);
+
+      if (readings.length < 2) {
+        showToast('Please add at least 2 readings');
+        return;
+      }
+
+      const periods = [];
+      for (let i = 1; i < readings.length; i++) {
+        let tcum = readings[i].reading - readings[i-1].reading;
+        if (tcum < 0) tcum = Math.abs(tcum);
+        if (tcum === 0) {
+          showToast('Tcum must be greater than zero');
+          return;
+        }
+        periods.push({
+          label1: readings[i-1].monthName,
+          label2: readings[i].monthName,
+          reading1: readings[i-1].reading,
+          reading2: readings[i].reading,
+          tcum,
+          t: splitIntoThree(tcum)
+        });
+      }
+
+      // Build results
+      let html = '';
+      let grandTotal = 0;
+      const resultPeriods = [];
+
+      for (const p of periods) {
+        const res = renderResults(p.label1, p.label2, p.tcum, p.t[0], p.t[1], p.t[2]);
+        html += res.html;
+        grandTotal += res.total;
+        resultPeriods.push({ ...p, res });
+      }
+
+      html += `<div class="grand-total">Grand Total = Rs ${formatCurrency(grandTotal)}/-</div>`;
+
+      lastResults = { readings, periods: resultPeriods, grandTotal };
+
+      document.getElementById('resultContent').innerHTML = html;
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    function recalculate() {
+      if (!lastResults) return;
+
+      for (const p of lastResults.periods) {
+        p.t = splitIntoThree(p.tcum);
+      }
+
+      let html = '';
+      let grandTotal = 0;
+      for (const p of lastResults.periods) {
+        const res = renderResults(p.label1, p.label2, p.tcum, p.t[0], p.t[1], p.t[2]);
+        html += res.html;
+        grandTotal += res.total;
+        p.res = res;
+      }
+      html += `<div class="grand-total">Grand Total = Rs ${formatCurrency(grandTotal)}/-</div>`;
+      lastResults.grandTotal = grandTotal;
+
+      document.getElementById('resultContent').innerHTML = html;
+      showToast('Recalculated with new random splits');
+    }
+
+    async function printPDF() {
+      if (!lastResults) return;
+      const lr = lastResults;
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+        // ── Header block ──
+        doc.setFontSize(18);
+        doc.setTextColor(15, 59, 94);
+        doc.setFont(undefined, 'bold');
+        doc.text('KALYAN HOSPITAL', 105, 18, { align: 'center' });
+
+        doc.setFontSize(11);
+        doc.setTextColor(80);
+        doc.setFont(undefined, 'normal');
+        doc.text('Histopathology Lab Electricity Charges', 105, 26, { align: 'center' });
+
+        // Thin divider
+        doc.setDrawColor(15, 59, 94);
+        doc.setLineWidth(0.3);
+        doc.line(30, 34, 180, 34);
+
+        // Date and meta
+        doc.setFontSize(8.5);
+        doc.setTextColor(100);
+        doc.text(`Date: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`, 30, 40);
+        doc.text('Unit: kWh', 100, 40);
+        doc.text('PF: 0.99', 150, 40);
+
+        doc.setDrawColor(200);
+        doc.line(30, 43, 180, 43);
+
+        let y = 50;
+
+        // ── Meter Readings Summary ──
+        doc.setFontSize(9);
+        doc.setTextColor(60);
+        doc.setFont(undefined, 'normal');
+        const readings = lr.readings.map(r => `${r.monthName}: ${r.reading}`).join('    |    ');
+        doc.text('Meter Readings:  ' + readings, 30, y);
+        y += 6;
+
+        // ── Rate info ──
+        doc.setFontSize(8.5);
+        doc.setTextColor(100);
+        doc.text('Tariff: T1 @ Rs 8.0/-  |  T2 @ Rs 9.6/-  |  T3 @ Rs 7.2/-', 30, y);
+        y += 4;
+        doc.line(30, y, 180, y);
+        y += 8;
+
+        // ── Each period section ──
+        let firstPeriod = true;
+        for (const p of lr.periods) {
+          // Add spacing between periods
+          if (!firstPeriod) {
+            y += 8;
+          }
+          firstPeriod = false;
+
+          // Period header
+          y += 4;
+          doc.setFontSize(11);
+          doc.setTextColor(15, 59, 94);
+          doc.setFont(undefined, 'bold');
+          doc.text(`${p.label1} - ${p.label2}`, 30, y);
+          doc.setFontSize(9);
+          doc.setTextColor(80);
+          doc.setFont(undefined, 'normal');
+          doc.text(`Tcum - ${p.tcum} kWh`, 30, y + 5);
+          y += 12;
+
+          // Table header
+          doc.setFontSize(8.5);
+          doc.setTextColor(120);
+          doc.setFont(undefined, 'bold');
+          doc.text('Tariff', 34, y);
+          doc.text('Units (kWh)', 90, y, { align: 'center' });
+          doc.text('Rate', 135, y, { align: 'center' });
+          doc.text('Amount (Rs)', 176, y, { align: 'right' });
+          y += 5;
+
+          doc.setDrawColor(220);
+          doc.line(30, y, 180, y);
+          y += 5;
+
+          // Table rows
+          doc.setFont(undefined, 'normal');
+          const rows = [
+            ['T1', p.t[0], '8.0/-', formatCurrency(p.t[0] * 8) + '/-'],
+            ['T2', p.t[1], '9.6/-', formatCurrency(p.t[1] * 9.6) + '/-'],
+            ['T3', p.t[2], '7.2/-', formatCurrency(p.t[2] * 7.2) + '/-'],
+          ];
+
+          for (const r of rows) {
+            doc.setTextColor(40);
+            doc.text(r[0], 34, y);
+            doc.text(r[1].toString(), 90, y, { align: 'center' });
+            doc.text(r[2], 135, y, { align: 'center' });
+            doc.text(r[3], 176, y, { align: 'right' });
+            y += 6;
+          }
+
+          // Total line
+          y += 1;
+          doc.setDrawColor(15, 59, 94);
+          doc.setLineWidth(0.3);
+          doc.line(30, y, 180, y);
+          y += 5;
+          doc.setFontSize(10);
+          doc.setTextColor(0);
+          doc.setFont(undefined, 'bold');
+          doc.text('Sub Total', 34, y);
+          doc.text(`= Rs ${formatCurrency(p.res.total)}/-`, 176, y, { align: 'right' });
+          y += 10;
+        }
+
+        // ── Grand Total ──
+        doc.setDrawColor(15, 59, 94);
+        doc.setLineWidth(0.6);
+        doc.line(30, y, 180, y);
+        y += 8;
+        doc.setFontSize(13);
+        doc.setTextColor(15, 59, 94);
+        doc.setFont(undefined, 'bold');
+        doc.text('Grand Total', 34, y);
+        doc.text(`= Rs ${formatCurrency(lr.grandTotal)}/-`, 176, y, { align: 'right' });
+
+        // ── Footer ──
+        y += 16;
+        doc.setDrawColor(200);
+        doc.line(30, y, 180, y);
+        y += 5;
+        doc.setFontSize(7.5);
+        doc.setTextColor(150);
+        doc.setFont(undefined, 'normal');
+        doc.text('This is a computer-generated statement.', 105, y, { align: 'center' });
+
+        doc.save('electricity-bill.pdf');
+        showToast('PDF downloaded');
+      } catch (e) {
+        console.error(e);
+        showToast('Loading PDF library... please try again');
+        if (!window.jspdf) {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          script.onload = () => { showToast('PDF ready — tap Print again'); };
+          document.head.appendChild(script);
+        }
+      }
+    }
+
+    // ── Initialize with 3 default rows ──
+    // Default: March, April, May
+    addReadingRow(2);  // March
+    addReadingRow(3);  // April
+    addReadingRow(4);  // May
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
