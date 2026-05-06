@@ -1,7 +1,8 @@
-const CACHE = 'eb-calc-v2';
+const CACHE = 'eb-calc-v3';
 const ASSETS = [
   '/',
   'index.html',
+  'jspdf.umd.min.js',
   'icon-192.png',
   'icon-512.png',
   'favicon.ico',
@@ -25,8 +26,19 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Let jsPDF CDN pass through to network (won't work offline but won't break)
+  // Cache CDN resources (jsPDF) so they work offline
   if (e.request.url.includes('cdnjs.cloudflare.com')) {
+    e.respondWith(
+      caches.match(e.request).then(cached =>
+        cached || fetch(e.request).then(resp => {
+          if (resp.ok) {
+            const clone = resp.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+          }
+          return resp;
+        })
+      )
+    );
     return;
   }
   e.respondWith(
