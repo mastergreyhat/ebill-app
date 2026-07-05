@@ -339,10 +339,11 @@
       const amt2 = t2 * 9.6;
       const amt3 = t3 * 7.2;
       const total = amt1 + amt2 + amt3;
+      const periodLabel = m2Label;
       return {
         html: `
           <div class="result-month">
-            <h3>${m1Label} &rarr; ${m2Label} &nbsp;<span class="tcum-badge">Tcum = ${tcum} kWh</span></h3>
+            <h3>${periodLabel} &nbsp;<span class="tcum-badge">Tcum = ${tcum} kWh</span></h3>
             <br>
             <table>
               <thead><tr><th></th><th>kWh</th><th>Rate</th><th>Amount</th></tr></thead>
@@ -511,7 +512,7 @@
           doc.setFontSize(11);
           doc.setTextColor(15, 59, 94);
           doc.setFont(undefined, 'bold');
-          doc.text(`${p.label1} - ${p.label2}`, 30, y);
+          doc.text(p.label2, 30, y);
           doc.setFontSize(9);
           doc.setTextColor(80);
           doc.setFont(undefined, 'normal');
