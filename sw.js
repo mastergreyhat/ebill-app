@@ -1,4 +1,4 @@
-const CACHE = 'eb-calc-v3';
+const CACHE = 'eb-calc-v4';
 const ASSETS = [
   '/',
   'index.html',

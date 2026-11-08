@@ -184,33 +184,6 @@
     }
     .add-month-row select { flex: 1; }
     .add-month-row input { flex: 1; }
-    .remove-btn {
-      background: #ef4444;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      width: 32px;
-      height: 32px;
-      font-size: 1.1rem;
-      cursor: pointer;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .remove-btn:active { background: #dc2626; }
-    .add-btn {
-      background: none;
-      border: 2px dashed #cbd5e1;
-      color: #64748b;
-      padding: 10px;
-      border-radius: 8px;
-      width: 100%;
-      font-size: 0.9rem;
-      cursor: pointer;
-      margin-bottom: 12px;
-    }
-    .add-btn:active { background: #f8fafc; }
   </style>
 </head>
 <body>
@@ -224,7 +197,6 @@
       <h2>Meter Readings</h2>
       <form id="readingForm">
         <div id="readingsContainer"></div>
-        <button type="button" class="add-btn" onclick="addReadingRow()">+ Add Month Reading</button>
         <button type="submit" class="btn btn-primary">Calculate</button>
       </form>
     </div>
@@ -277,45 +249,14 @@
           ${options}
         </select>
         <input type="number" inputmode="numeric" placeholder="Reading" value="${value}" required>
-        ${rowCounter > 3 ? '<button type="button" class="remove-btn" onclick="removeRow(' + id + ')">&times;</button>' : ''}
       `;
       return { div, id };
     }
 
     function addReadingRow(monthIndex = null, value = '') {
       const container = document.getElementById('readingsContainer');
-      const { div, id } = createReadingRow(monthIndex, value);
+      const { div } = createReadingRow(monthIndex, value);
       container.appendChild(div);
-      updateRemoveButtons();
-    }
-
-    function removeRow(id) {
-      const row = document.getElementById('row-' + id);
-      if (row) {
-        row.remove();
-        updateRemoveButtons();
-      }
-    }
-
-    function updateRemoveButtons() {
-      const rows = document.querySelectorAll('#readingsContainer .add-month-row');
-      if (rows.length <= 3) {
-        rows.forEach(r => {
-          const btn = r.querySelector('.remove-btn');
-          if (btn) btn.remove();
-        });
-      } else {
-        rows.forEach(r => {
-          if (!r.querySelector('.remove-btn')) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'remove-btn';
-            btn.textContent = '×';
-            btn.onclick = function() { removeRow(parseInt(r.id.replace('row-', ''))); };
-            r.appendChild(btn);
-          }
-        });
-      }
     }
 
     function splitIntoThree(total) {
@@ -377,31 +318,31 @@
         readings.push({ monthIndex: monthIdx, monthName: MONTHS[monthIdx], reading });
       }
 
-      // Sort by month index so periods are chronological
-      readings.sort((a, b) => a.monthIndex - b.monthIndex);
-
-      if (readings.length < 2) {
-        showToast('Please add at least 2 readings');
+      if (readings.length !== 2) {
+        showToast('Please enter both month readings');
         return;
       }
 
-      const periods = [];
-      for (let i = 1; i < readings.length; i++) {
-        let tcum = readings[i].reading - readings[i-1].reading;
-        if (tcum < 0) tcum = Math.abs(tcum);
-        if (tcum === 0) {
-          showToast('Tcum must be greater than zero');
-          return;
-        }
-        periods.push({
-          label1: readings[i-1].monthName,
-          label2: readings[i].monthName,
-          reading1: readings[i-1].reading,
-          reading2: readings[i].reading,
-          tcum,
-          t: splitIntoThree(tcum)
-        });
+      if (readings[0].monthIndex === readings[1].monthIndex) {
+        showToast('Please select two different months');
+        return;
       }
+
+      let tcum = readings[1].reading - readings[0].reading;
+      if (tcum < 0) tcum = Math.abs(tcum);
+      if (tcum === 0) {
+        showToast('Tcum must be greater than zero');
+        return;
+      }
+
+      const periods = [{
+        label1: readings[0].monthName,
+        label2: readings[1].monthName,
+        reading1: readings[0].reading,
+        reading2: readings[1].reading,
+        tcum,
+        t: splitIntoThree(tcum)
+      }];
 
       // Build results
       let html = '';
@@ -559,7 +500,7 @@
           doc.setFontSize(10);
           doc.setTextColor(0);
           doc.setFont(undefined, 'bold');
-          doc.text('Sub Total', 34, y);
+          doc.text('Total', 34, y);
           doc.text(`= Rs ${formatCurrency(p.res.total)}/-`, 176, y, { align: 'right' });
           y += 10;
         }
@@ -599,9 +540,8 @@
       }
     }
 
-    // ── Initialize with 3 default rows ──
-    // Default: March, April, May
-    addReadingRow(2);  // March
+    // ── Initialize with 2 default rows ──
+    // Default: April, May
     addReadingRow(3);  // April
     addReadingRow(4);  // May
 
